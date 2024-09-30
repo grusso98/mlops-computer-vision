@@ -3,39 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Object Detection</title>
+    <title>Object Detection & Segmentation</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Basic styles for layout */
-        #imageContainer {
-            display: flex;
-            justify-content: space-between;
+        /* General Page Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #444;
             margin-top: 20px;
         }
+
+        /* Form styling */
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            border-radius: 5px;
+            border: 2px solid #ccc;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Image container styling */
+        #imageContainer {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        #imageContainer .image-wrapper {
+            text-align: center;
+        }
+
         #imageContainer img {
-            max-width: 48%; /* Ensures images fit side by side */
+            width: 400px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        #output {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Download Button */
+        .downloadButton {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .downloadButton:hover {
+            background-color: #0b7dda;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 10px;
+            background-color: #222;
+            color: white;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
         }
     </style>
 </head>
 <body>
-    <h1>Object Detection Model</h1>
+    <h1>MLOps for Computer Vision Project</h1>
+    <h2 style="text-align: center;">Object Detection & Segmentation Model</h2>
     <form id="uploadForm">
         <input type="file" id="imageInput" accept="image/*" required>
-        <br><br>
         <button type="submit">Upload and Predict</button>
     </form>
 
     <div id="output"></div>
+    
     <div id="imageContainer">
-        <img id="originalImage" alt="Original Image" />
-        <img id="outputImage" alt="Predicted Image" />
+        <div class="image-wrapper">
+            <img id="originalImage" alt="Original Image">
+            <p>Original Image</p>
+        </div>
+        <div class="image-wrapper">
+            <img id="detectionImage" alt="Detection Image">
+            <p>Detection Image</p>
+            <button id="downloadDetectionButton" class="downloadButton">Download Detection Image</button>
+        </div>
+        <div class="image-wrapper">
+            <img id="segmentationImage" alt="Segmentation Image">
+            <p>Segmentation Image</p>
+            <button id="downloadSegmentationButton" class="downloadButton">Download Segmentation Image</button>
+        </div>
     </div>
+
+    <footer>
+        Object Detection & Segmentation Project | Powered by YOLOv8
+    </footer>
 
     <script>
         const form = document.getElementById('uploadForm');
         const output = document.getElementById('output');
         const originalImage = document.getElementById('originalImage');
-        const outputImage = document.getElementById('outputImage');
+        const detectionImage = document.getElementById('detectionImage');
+        const segmentationImage = document.getElementById('segmentationImage');
+        const downloadDetectionButton = document.getElementById('downloadDetectionButton');
+        const downloadSegmentationButton = document.getElementById('downloadSegmentationButton');
+
+        let detectionBlob = null;  // To store detection image blob for download
+        let segmentationBlob = null;  // To store segmentation image blob for download
 
         form.addEventListener('submit', async function (event) {
             event.preventDefault();
@@ -50,25 +162,58 @@
             originalImage.alt = 'Original Image';
 
             try {
-                const response = await fetch('http://127.0.0.1:8000/predict/', {
+                // Fetch for Detection
+                const detectResponse = await fetch('http://127.0.0.1:8000/detect/', {
                     method: 'POST',
                     body: formData
                 });
 
-                if (!response.ok) {
-                    throw new Error('Prediction failed.');
+                if (!detectResponse.ok) {
+                    throw new Error('Detection failed.');
                 }
 
-                // Handle the response as a Blob for the image
-                const blob = await response.blob();
-                const imgURL = URL.createObjectURL(blob);
-                
-                // Display the image with bounding boxes
-                outputImage.src = imgURL;
-                outputImage.alt = 'Predicted Image';
+                detectionBlob = await detectResponse.blob();
+                const detectImgURL = URL.createObjectURL(detectionBlob);
+                detectionImage.src = detectImgURL;
+                detectionImage.alt = 'Detection Image';
+
+                // Fetch for Segmentation
+                const segmentResponse = await fetch('http://127.0.0.1:8000/segment/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!segmentResponse.ok) {
+                    throw new Error('Segmentation failed.');
+                }
+
+                segmentationBlob = await segmentResponse.blob();
+                const segmentImgURL = URL.createObjectURL(segmentationBlob);
+                segmentationImage.src = segmentImgURL;
+                segmentationImage.alt = 'Segmentation Image';
 
             } catch (error) {
                 output.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        });
+
+        // Handle download detection button click
+        downloadDetectionButton.addEventListener('click', () => {
+            if (detectionBlob) {
+                const downloadLink = document.createElement('a');
+                downloadLink.href = URL.createObjectURL(detectionBlob);
+                downloadLink.download = 'detection_result.jpg';
+                downloadLink.click();
+            }
+        });
+
+        // Handle download segmentation button click
+        downloadSegmentationButton.addEventListener('click', () => {
+            if (segmentationBlob) {
+                const downloadLink = document.createElement('a');
+                downloadLink.href = URL.createObjectURL(segmentationBlob);
+                downloadLink.download = 'segmentation_result.jpg';
+                downloadLink.click();
             }
         });
     </script>
