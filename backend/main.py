@@ -22,8 +22,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/predict/")
-async def predict_image(file: UploadFile = File(...)):
+@app.post("/detect/")
+async def predict_image_detection(file: UploadFile = File(...)):
     try:
         # Read the uploaded image file
         contents = await file.read()
@@ -41,13 +41,51 @@ async def predict_image(file: UploadFile = File(...)):
         print("Image loaded!")
 
         # Perform prediction and get the image with overlaid boxes
-        image_with_boxes = predict(image)
+        image_with_boxes = predict(image, task='detection')
         im = Image.fromarray(image_with_boxes)
-        im.save("your_file.jpeg")
         print("Predicted!")
 
-        # Convert the image with boxes back to a byte stream
+         # Encode the image with boxes back to JPEG format
         _, img_encoded = cv2.imencode('.jpg', image_with_boxes)
+        
+        # Create a byte stream from the encoded image
+        img_byte_arr = io.BytesIO(img_encoded.tobytes())
+        img_byte_arr.seek(0)
+
+        # Return the image with bounding boxes as a StreamingResponse
+        return StreamingResponse(img_byte_arr, media_type="image/jpeg")
+
+    except Exception as e:
+        # Handle any unexpected errors
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    
+@app.post("/segment/")
+async def predict_image_segmentation(file: UploadFile = File(...)):
+    try:
+        # Read the uploaded image file
+        contents = await file.read()
+        
+        # Convert the contents to a NumPy array
+        nparr = np.frombuffer(contents, np.uint8)
+        
+        # Decode the image from the NumPy array
+        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        # Verify that the image was loaded properly
+        if image is None:
+            raise HTTPException(status_code=400, detail="Invalid image file.")
+        
+        print("Image loaded!")
+
+        # Perform prediction and get the image with overlaid boxes
+        image_with_boxes = predict(image, task='segmentation')
+        im = Image.fromarray(image_with_boxes)
+        print("Predicted!")
+
+         # Encode the image with boxes back to JPEG format
+        _, img_encoded = cv2.imencode('.jpg', image_with_boxes)
+        
+        # Create a byte stream from the encoded image
         img_byte_arr = io.BytesIO(img_encoded.tobytes())
         img_byte_arr.seek(0)
 
