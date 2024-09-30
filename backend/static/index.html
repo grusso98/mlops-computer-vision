@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Detection</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Object Detection Model</h1>
+    <form id="uploadForm">
+        <input type="file" id="imageInput" accept="image/*" required>
+        <br><br>
+        <button type="submit">Upload and Predict</button>
+    </form>
+
+    <div id="output"></div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const output = document.getElementById('output');
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/predict/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Prediction failed.');
+                }
+
+                const result = await response.json();
+                output.innerHTML = `<h3>Predictions:</h3><pre>${JSON.stringify(result.predictions, null, 2)}</pre>`;
+            } catch (error) {
+                output.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
