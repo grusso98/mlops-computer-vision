@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Object Detection</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Basic styles for layout */
+        #imageContainer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        #imageContainer img {
+            max-width: 48%; /* Ensures images fit side by side */
+        }
+    </style>
 </head>
 <body>
     <h1>Object Detection Model</h1>
@@ -15,10 +26,16 @@
     </form>
 
     <div id="output"></div>
+    <div id="imageContainer">
+        <img id="originalImage" alt="Original Image" />
+        <img id="outputImage" alt="Predicted Image" />
+    </div>
 
     <script>
         const form = document.getElementById('uploadForm');
         const output = document.getElementById('output');
+        const originalImage = document.getElementById('originalImage');
+        const outputImage = document.getElementById('outputImage');
 
         form.addEventListener('submit', async function (event) {
             event.preventDefault();
@@ -27,6 +44,10 @@
             const file = fileInput.files[0];
             const formData = new FormData();
             formData.append('file', file);
+
+            // Display the original uploaded image
+            originalImage.src = URL.createObjectURL(file);
+            originalImage.alt = 'Original Image';
 
             try {
                 const response = await fetch('http://127.0.0.1:8000/predict/', {
@@ -38,8 +59,14 @@
                     throw new Error('Prediction failed.');
                 }
 
-                const result = await response.json();
-                output.innerHTML = `<h3>Predictions:</h3><pre>${JSON.stringify(result.predictions, null, 2)}</pre>`;
+                // Handle the response as a Blob for the image
+                const blob = await response.blob();
+                const imgURL = URL.createObjectURL(blob);
+                
+                // Display the image with bounding boxes
+                outputImage.src = imgURL;
+                outputImage.alt = 'Predicted Image';
+
             } catch (error) {
                 output.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
             }
