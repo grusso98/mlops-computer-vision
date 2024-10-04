@@ -12,3 +12,12 @@ The Deep learning models used for this projects are [YoloV8](https://docs.ultral
 
 ### Custom models
 You can deploy your own YoloV8 custom models simply modifying the .pt files in the model.py script and adding them in the models folder.
+
+### Author:
+  <div align="center">
+    <p>Gianmarco Russo</p>
+    <a href="https://www.linkedin.com/in/grusso98/" style="text-decoration:none;">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/LinkedIn_logo_initials.png/640px-LinkedIn_logo_initials.png" width="2%" alt="" /></a>
+  </div>
+<br>
+<br>
