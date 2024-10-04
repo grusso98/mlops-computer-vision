@@ -43,18 +43,18 @@ def draw_boxes(image: np.ndarray, boxes: np.ndarray, class_ids: np.ndarray, scor
         label = f"{class_names[int(class_id)]}: {score:.2f}"
 
         # Draw the bounding box
-        cv2.rectangle(image, (x1, y1), (x2, y2), color=(0, 255, 0), thickness=2)
+        cv2.rectangle(image, (x1, y1), (x2, y2), color=(255, 255, 255), thickness=2)
 
         # Calculate the label size and position
-        text_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, thickness=1)[0]
+        text_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, fontScale=3, thickness=3)[0]
         text_x = x1
         text_y = y1 - 10 if y1 - 10 > 10 else y1 + 10
 
         # Draw the label background rectangle
-        cv2.rectangle(image, (text_x, text_y - text_size[1]), (text_x + text_size[0], text_y), color=(0, 255, 0), thickness=cv2.FILLED)
+        cv2.rectangle(image, (text_x, text_y - text_size[1]), (text_x + text_size[0], text_y), color=(255, 255, 255), thickness=cv2.FILLED)
 
         # Draw the label
-        cv2.putText(image, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=(255, 255, 255), thickness=1)
+        cv2.putText(image, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, fontScale=3, color=(0, 0, 0), thickness=3)
 
     return image
 
@@ -77,14 +77,14 @@ def draw_masks(image: np.ndarray, masks: list, class_ids: np.ndarray, scores: np
         label = f"{class_names[int(class_id)]}: {score:.2f}"
 
         # Get the size of the label text
-        text_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, thickness=1)
+        text_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, fontScale=3, thickness=3)
 
         # Calculate text position to center it on the mask
         text_x = int(centroid[0] - text_size[0] / 2)
         text_y = int(centroid[1] + text_size[1] / 2)
 
         # Add the label centered on the mask
-        cv2.putText(image, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=(255, 255, 255), thickness=1)
+        cv2.putText(image, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, fontScale=3, color=(0, 0, 0), thickness=3)
 
     return image
 
