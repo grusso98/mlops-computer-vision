@@ -6,8 +6,8 @@ The app offers a detection and a segmentation endpoint.
 The Deep learning models used for this projects are [YoloV8](https://docs.ultralytics.com/models/yolov8/#supported-tasks-and-modeshttps://docs.ultralytics.com/models/yolov8/#supported-tasks-and-modes) models from Ultralytics.
 
 ### Docker usage
-- build image: docker build -t <container-name> .
-- run container: docker run -p 8000:<port> <container-name>
+- build image: ```docker build -t container-name .```
+- run container: ```docker run -p 8000:port container-name```
 
 
 ### Custom models
