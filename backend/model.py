@@ -1,41 +1,55 @@
 import cv2
 import numpy as np
 from ultralytics import YOLO
+from prometheus_client import Counter, Summary
 
 # Random colors for each class (you can modify these for your dataset)
 COLORS = np.random.uniform(0, 255, size=(80, 3))  # Assuming 80 classes, adjust for your dataset
 
+# Prometheus metrics for prediction counts and latency
+PREDICTION_COUNT = Counter('prediction_count', 'Total number of predictions', ['task'])
+PREDICTION_LATENCY = Summary('prediction_latency_seconds', 'Time taken for a prediction')
+
 def predict(image: np.ndarray, task: str) -> np.ndarray:
     if task == 'detection':
-        # Load the YOLOv8 detection model
-        model = YOLO('models/yolov8n.pt')  # Adjust to your model's path
-        results = model.predict(image)
-        
-        # Get the detection results
-        boxes = results[0].boxes.xyxy.cpu().numpy()
-        class_ids = results[0].boxes.cls.cpu().numpy()
-        scores = results[0].boxes.conf.cpu().numpy()
-        class_names = model.names
-        
-        # Draw bounding boxes on the image
-        image_with_boxes = draw_boxes(image, boxes, class_ids, scores, class_names)
-        return image_with_boxes
+        with PREDICTION_LATENCY.time():  # Measure prediction latency
+            # Load the YOLOv8 detection model
+            model = YOLO('models/yolov8n.pt')  # Adjust to your model's path
+            results = model.predict(image)
+            
+            # Get the detection results
+            boxes = results[0].boxes.xyxy.cpu().numpy()
+            class_ids = results[0].boxes.cls.cpu().numpy()
+            scores = results[0].boxes.conf.cpu().numpy()
+            class_names = model.names
+            
+            # Draw bounding boxes on the image
+            image_with_boxes = draw_boxes(image, boxes, class_ids, scores, class_names)
+            
+            # Increment prediction count for detection
+            PREDICTION_COUNT.labels(task='detection').inc()
+            
+            return image_with_boxes
 
     elif task == 'segmentation':
-        # Load the YOLOv8 segmentation model
-        model = YOLO('models/yolov8n-seg.pt')  # Adjust to your model's path
-        results = model.predict(image)
+        with PREDICTION_LATENCY.time():  # Measure prediction latency
+            # Load the YOLOv8 segmentation model
+            model = YOLO('models/yolov8n-seg.pt')  # Adjust to your model's path
+            results = model.predict(image)
 
-        # Extract segmentation masks, class ids, and scores
-        masks = results[0].masks.xy  # List of polygon coordinates for each mask
-        class_ids = results[0].boxes.cls.cpu().numpy()  # Class IDs for each mask
-        scores = results[0].boxes.conf.cpu().numpy()  # Confidence scores
-        class_names = model.names
-        
-        # Draw segmentation masks on the image with class colors and labels
-        image_with_masks = draw_masks(image, masks, class_ids, scores, class_names)
-        return image_with_masks
-
+            # Extract segmentation masks, class ids, and scores
+            masks = results[0].masks.xy  # List of polygon coordinates for each mask
+            class_ids = results[0].boxes.cls.cpu().numpy()  # Class IDs for each mask
+            scores = results[0].boxes.conf.cpu().numpy()  # Confidence scores
+            class_names = model.names
+            
+            # Draw segmentation masks on the image with class colors and labels
+            image_with_masks = draw_masks(image, masks, class_ids, scores, class_names)
+            
+            # Increment prediction count for segmentation
+            PREDICTION_COUNT.labels(task='segmentation').inc()
+            
+            return image_with_masks
 
 def draw_boxes(image: np.ndarray, boxes: np.ndarray, class_ids: np.ndarray, scores: np.ndarray, class_names: list) -> np.ndarray:
     for box, class_id, score in zip(boxes, class_ids, scores):
@@ -57,7 +71,6 @@ def draw_boxes(image: np.ndarray, boxes: np.ndarray, class_ids: np.ndarray, scor
         cv2.putText(image, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, fontScale=3, color=(0, 0, 0), thickness=3)
 
     return image
-
 
 def draw_masks(image: np.ndarray, masks: list, class_ids: np.ndarray, scores: np.ndarray, class_names: list) -> np.ndarray:
     for mask, class_id, score in zip(masks, class_ids, scores):
@@ -87,4 +100,3 @@ def draw_masks(image: np.ndarray, masks: list, class_ids: np.ndarray, scores: np
         cv2.putText(image, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, fontScale=3, color=(0, 0, 0), thickness=3)
 
     return image
-

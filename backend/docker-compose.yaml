@@ -1,0 +1,27 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    container_name: fastapi_app
+    ports:
+      - "8000:8000"
+    networks:
+      - monitoring
+    expose:
+      - 8000
+    environment:
+      - APP_METRICS_PATH=/metrics  # Path to metrics in FastAPI app
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yaml
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge

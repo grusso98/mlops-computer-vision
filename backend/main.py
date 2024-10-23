@@ -3,15 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
 from model import predict
+from prometheus_client import generate_latest, start_http_server
 import numpy as np
 import cv2
 from PIL import Image
 import io
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI()
-
-# Serve static files (HTML, CSS) from the 'static' directory
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Enable CORS to allow frontend to communicate with the backend (if necessary)
 app.add_middleware(
@@ -22,76 +21,53 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Start the Prometheus metrics server
+#start_http_server(8001)  # Separate port for Prometheus
+
+
+
+# Serve static files (HTML, CSS) from the 'static' directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/metrics")
+def get_metrics():
+    # Expose metrics for Prometheus scraping
+    return generate_latest()
+
 @app.post("/detect/")
 async def predict_image_detection(file: UploadFile = File(...)):
     try:
-        # Read the uploaded image file
         contents = await file.read()
-        
-        # Convert the contents to a NumPy array
         nparr = np.frombuffer(contents, np.uint8)
-        
-        # Decode the image from the NumPy array
         image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        # Verify that the image was loaded properly
+
         if image is None:
             raise HTTPException(status_code=400, detail="Invalid image file.")
-        
+
         print("Image loaded!")
-
-        # Perform prediction and get the image with overlaid boxes
         image_with_boxes = predict(image, task='detection')
-        im = Image.fromarray(image_with_boxes)
-        print("Predicted!")
+        img_encoded = cv2.imencode('.jpg', image_with_boxes)[1].tobytes()
 
-         # Encode the image with boxes back to JPEG format
-        _, img_encoded = cv2.imencode('.jpg', image_with_boxes)
-        
-        # Create a byte stream from the encoded image
-        img_byte_arr = io.BytesIO(img_encoded.tobytes())
-        img_byte_arr.seek(0)
-
-        # Return the image with bounding boxes as a StreamingResponse
-        return StreamingResponse(img_byte_arr, media_type="image/jpeg")
+        return StreamingResponse(io.BytesIO(img_encoded), media_type="image/jpeg")
 
     except Exception as e:
-        # Handle any unexpected errors
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-    
+
 @app.post("/segment/")
 async def predict_image_segmentation(file: UploadFile = File(...)):
     try:
-        # Read the uploaded image file
         contents = await file.read()
-        
-        # Convert the contents to a NumPy array
         nparr = np.frombuffer(contents, np.uint8)
-        
-        # Decode the image from the NumPy array
         image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        # Verify that the image was loaded properly
+
         if image is None:
             raise HTTPException(status_code=400, detail="Invalid image file.")
-        
+
         print("Image loaded!")
-
-        # Perform prediction and get the image with overlaid boxes
         image_with_boxes = predict(image, task='segmentation')
-        im = Image.fromarray(image_with_boxes)
-        print("Predicted!")
+        img_encoded = cv2.imencode('.jpg', image_with_boxes)[1].tobytes()
 
-         # Encode the image with boxes back to JPEG format
-        _, img_encoded = cv2.imencode('.jpg', image_with_boxes)
-        
-        # Create a byte stream from the encoded image
-        img_byte_arr = io.BytesIO(img_encoded.tobytes())
-        img_byte_arr.seek(0)
-
-        # Return the image with bounding boxes as a StreamingResponse
-        return StreamingResponse(img_byte_arr, media_type="image/jpeg")
+        return StreamingResponse(io.BytesIO(img_encoded), media_type="image/jpeg")
 
     except Exception as e:
-        # Handle any unexpected errors
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
