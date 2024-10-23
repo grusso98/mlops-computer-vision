@@ -163,7 +163,7 @@
 
             try {
                 // Fetch for Detection
-                const detectResponse = await fetch('http://127.0.0.1:8000/detect/', {
+                const detectResponse = await fetch('http://0.0.0.0:8000/detect/', {
                     method: 'POST',
                     body: formData
                 });
@@ -178,7 +178,7 @@
                 detectionImage.alt = 'Detection Image';
 
                 // Fetch for Segmentation
-                const segmentResponse = await fetch('http://127.0.0.1:8000/segment/', {
+                const segmentResponse = await fetch('http://0.0.0.0:8000/segment/', {
                     method: 'POST',
                     body: formData
                 });
