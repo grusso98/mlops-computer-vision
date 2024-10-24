@@ -21,10 +21,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Start the Prometheus metrics server
-#start_http_server(8001)  # Separate port for Prometheus
+# Initialize the Instrumentator
+instrumentator = Instrumentator()
 
-
+# Instrument the FastAPI app
+instrumentator.instrument(app).expose(app)
 
 # Serve static files (HTML, CSS) from the 'static' directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
