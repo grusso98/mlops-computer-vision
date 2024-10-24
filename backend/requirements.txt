@@ -23,12 +23,15 @@ opencv-python==4.10.0.84
 packaging==24.1
 pandas==2.2.3
 pillow==10.4.0
+prometheus-fastapi-instrumentator==7.0.0
+prometheus_client==0.21.0
 psutil==6.0.0
 py-cpuinfo==9.0.0
 pydantic==2.9.2
 pydantic_core==2.23.4
 pyparsing==3.1.4
 python-dateutil==2.9.0.post0
+python-multipart==0.0.12
 pytz==2024.2
 PyYAML==6.0.2
 requests==2.32.3
