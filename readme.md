@@ -7,6 +7,8 @@ The Deep learning models used for this projects are [YoloV8](https://docs.ultral
 
 ### Deploy the whole stack (WebApp | Prometheus | Grafana)
 Into the backend folder run:  ```docker-compose up --build```
+Prometheus is available at port 9090.
+Grafana available at port 3000.
 
 ### App deployment only
 #### Docker usage
