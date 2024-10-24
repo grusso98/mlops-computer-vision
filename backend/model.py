@@ -7,16 +7,16 @@ from prometheus_client import Counter, Summary
 COLORS = np.random.uniform(0, 255, size=(80, 3))  # Assuming 80 classes, adjust for your dataset
 
 # Prometheus metrics for prediction counts and latency
-PREDICTION_COUNT = Counter('prediction_count', 'Total number of predictions', ['task'])
-PREDICTION_LATENCY = Summary('prediction_latency_seconds', 'Time taken for a prediction')
+PREDICTION_COUNT = Counter('prediction_count_total', 'Total number of predictions', ['task'])
+PREDICTION_LATENCY = Summary('prediction_latency_seconds', 'Time taken for a prediction', ['task'])
 
 def predict(image: np.ndarray, task: str) -> np.ndarray:
     if task == 'detection':
-        with PREDICTION_LATENCY.time():  # Measure prediction latency
+        with PREDICTION_LATENCY.labels(task='detection').time():  # Measure prediction latency
             # Load the YOLOv8 detection model
             model = YOLO('models/yolov8n.pt')  # Adjust to your model's path
             results = model.predict(image)
-            
+
             # Get the detection results
             boxes = results[0].boxes.xyxy.cpu().numpy()
             class_ids = results[0].boxes.cls.cpu().numpy()
@@ -32,7 +32,7 @@ def predict(image: np.ndarray, task: str) -> np.ndarray:
             return image_with_boxes
 
     elif task == 'segmentation':
-        with PREDICTION_LATENCY.time():  # Measure prediction latency
+        with PREDICTION_LATENCY.labels(task='segmentation').time():  # Measure prediction latency
             # Load the YOLOv8 segmentation model
             model = YOLO('models/yolov8n-seg.pt')  # Adjust to your model's path
             results = model.predict(image)
@@ -59,17 +59,16 @@ def draw_boxes(image: np.ndarray, boxes: np.ndarray, class_ids: np.ndarray, scor
         # Draw the bounding box
         cv2.rectangle(image, (x1, y1), (x2, y2), color=(255, 255, 255), thickness=2)
 
-        # Calculate the label size and position
-        text_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, fontScale=3, thickness=3)[0]
-        text_x = x1
-        text_y = y1 - 10 if y1 - 10 > 10 else y1 + 10
+        # Calculate the label size and position for the bottom-left corner
+        font_scale = 0.6  # Smaller font scale for the label
+        thickness = 1  # Thinner text thickness
+        text_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, thickness=thickness)[0]
+        text_x = x1 + 5  # Offset a little from the left edge
+        text_y = y2 - 5  # Slight offset from the bottom
 
-        # Draw the label background rectangle
-        cv2.rectangle(image, (text_x, text_y - text_size[1]), (text_x + text_size[0], text_y), color=(255, 255, 255), thickness=cv2.FILLED)
-
-        # Draw the label
-        cv2.putText(image, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, fontScale=3, color=(0, 0, 0), thickness=3)
-
+        # Draw the label text inside the box, bottom-left
+        cv2.putText(image, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, color=(255, 255, 255), thickness=thickness, lineType=cv2.LINE_AA)
+    
     return image
 
 def draw_masks(image: np.ndarray, masks: list, class_ids: np.ndarray, scores: np.ndarray, class_names: list) -> np.ndarray:
@@ -83,20 +82,22 @@ def draw_masks(image: np.ndarray, masks: list, class_ids: np.ndarray, scores: np
         # Fill the polygon with the corresponding color
         cv2.fillPoly(image, [polygon], color=color)
 
-        # Calculate the centroid of the mask (average of polygon points)
-        centroid = np.mean(polygon, axis=0).astype(int)
+        # Get bounding box coordinates around the mask
+        x1, y1, x2, y2 = cv2.boundingRect(polygon)
 
         # Prepare the label
         label = f"{class_names[int(class_id)]}: {score:.2f}"
 
         # Get the size of the label text
-        text_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, fontScale=3, thickness=3)
+        font_scale = 0.6  # Smaller font for masks too
+        thickness = 1
+        text_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, thickness=thickness)[0]
 
-        # Calculate text position to center it on the mask
-        text_x = int(centroid[0] - text_size[0] / 2)
-        text_y = int(centroid[1] + text_size[1] / 2)
+        # Calculate text position for the bottom-left corner of the mask bounding box
+        text_x = x1 + 5  # Offset from left
+        text_y = y2 - 5  # Offset from bottom
 
-        # Add the label centered on the mask
-        cv2.putText(image, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, fontScale=3, color=(0, 0, 0), thickness=3)
+        # Add the label inside the mask at the bottom-left corner
+        cv2.putText(image, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, color=(255, 255, 255), thickness=thickness, lineType=cv2.LINE_AA)
 
     return image
