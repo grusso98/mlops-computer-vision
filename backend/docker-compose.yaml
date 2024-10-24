@@ -9,14 +9,12 @@ services:
       - monitoring
     expose:
       - 8000
-    environment:
-      - APP_METRICS_PATH=/metrics  # Path to metrics in FastAPI app
 
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     volumes:
-      - ./prometheus.yaml:/etc/prometheus/prometheus.yaml
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
     networks:
