@@ -2,3 +2,4 @@ mlops-od/
 *.jpg
 *.jpeg
 backend/__pycache__
+app/__pycache__
