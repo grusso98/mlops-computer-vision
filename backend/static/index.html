@@ -53,23 +53,30 @@
         }
 
         /* Image container styling */
+        #imageContainer img {
+            max-width: 400px;  /* Set a maximum width for images */
+            max-height: 300px; /* Set a maximum height for images */
+            width: auto;       /* Maintain aspect ratio */
+            height: auto;      /* Maintain aspect ratio */
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
         #imageContainer {
             display: flex;
             justify-content: space-around;
             margin-top: 20px;
             flex-wrap: wrap;
+            padding: 20px;  /* Add some padding around the container */
         }
 
         #imageContainer .image-wrapper {
             text-align: center;
+            margin: 20px;  /* Add margin around each image wrapper */
         }
 
-        #imageContainer img {
-            width: 400px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-        }
+
 
         #output {
             margin-top: 20px;
@@ -163,7 +170,7 @@
 
             try {
                 // Fetch for Detection
-                const detectResponse = await fetch('http://0.0.0.0:8000/detect/', {
+                const detectResponse = await fetch('http://127.0.0.1:8000/detect/', {
                     method: 'POST',
                     body: formData
                 });
@@ -178,7 +185,7 @@
                 detectionImage.alt = 'Detection Image';
 
                 // Fetch for Segmentation
-                const segmentResponse = await fetch('http://0.0.0.0:8000/segment/', {
+                const segmentResponse = await fetch('http://127.0.0.1:8000/segment/', {
                     method: 'POST',
                     body: formData
                 });
