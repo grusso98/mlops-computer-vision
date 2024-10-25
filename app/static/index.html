@@ -14,7 +14,7 @@
             background-color: #f4f4f4;
             color: #333;
         }
-        
+
         h1 {
             text-align: center;
             color: #444;
@@ -37,6 +37,20 @@
             font-size: 16px;
         }
 
+        /* Adjust spacing around checkboxes */
+        .checkbox-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 20px; /* Adjust the gap between the checkboxes */
+            margin-bottom: 20px;
+        }
+
+        .checkbox-label {
+            font-size: 16px;
+            margin-left: 5px;
+        }
+
+        /* Increased space for button */
         button {
             background-color: #4CAF50;
             color: white;
@@ -46,6 +60,7 @@
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.3s ease;
+            margin-top: 20px; /* Added space between checkboxes and button */
         }
 
         button:hover {
@@ -54,10 +69,10 @@
 
         /* Image container styling */
         #imageContainer img {
-            max-width: 400px;  /* Set a maximum width for images */
-            max-height: 300px; /* Set a maximum height for images */
-            width: auto;       /* Maintain aspect ratio */
-            height: auto;      /* Maintain aspect ratio */
+            max-width: 400px;
+            max-height: 300px;
+            width: auto;
+            height: auto;
             border: 2px solid #ddd;
             border-radius: 5px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
@@ -68,15 +83,13 @@
             justify-content: space-around;
             margin-top: 20px;
             flex-wrap: wrap;
-            padding: 20px;  /* Add some padding around the container */
+            padding: 20px;
         }
 
         #imageContainer .image-wrapper {
             text-align: center;
-            margin: 20px;  /* Add margin around each image wrapper */
+            margin: 20px;
         }
-
-
 
         #output {
             margin-top: 20px;
@@ -111,15 +124,36 @@
             bottom: 0;
             width: 100%;
         }
+
+        /* Info section styling */
+        #info {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
     <h1>MLOps for Computer Vision Project</h1>
     <h2 style="text-align: center;">Object Detection & Segmentation Model</h2>
+    
     <form id="uploadForm">
         <input type="file" id="imageInput" accept="image/*" required>
+
+        <!-- Checkbox section -->
+        <div class="checkbox-wrapper">
+            <label><input type="checkbox" id="detectionCheckbox" checked> <span class="checkbox-label">Detection</span></label>
+            <label><input type="checkbox" id="segmentationCheckbox" checked> <span class="checkbox-label">Segmentation</span></label>
+        </div>
+
         <button type="submit">Upload and Predict</button>
     </form>
+
+    <!-- Info text for user guidance -->
+    <div id="info">
+        <p>Check the options to choose which model to run. By default, both detection and segmentation will be applied.</p>
+    </div>
 
     <div id="output"></div>
     
@@ -152,9 +186,11 @@
         const segmentationImage = document.getElementById('segmentationImage');
         const downloadDetectionButton = document.getElementById('downloadDetectionButton');
         const downloadSegmentationButton = document.getElementById('downloadSegmentationButton');
+        const detectionCheckbox = document.getElementById('detectionCheckbox');
+        const segmentationCheckbox = document.getElementById('segmentationCheckbox');
 
-        let detectionBlob = null;  // To store detection image blob for download
-        let segmentationBlob = null;  // To store segmentation image blob for download
+        let detectionBlob = null;
+        let segmentationBlob = null;
 
         form.addEventListener('submit', async function (event) {
             event.preventDefault();
@@ -169,35 +205,39 @@
             originalImage.alt = 'Original Image';
 
             try {
-                // Fetch for Detection
-                const detectResponse = await fetch('http://127.0.0.1:8000/detect/', {
-                    method: 'POST',
-                    body: formData
-                });
+                if (detectionCheckbox.checked) {
+                    // Fetch for Detection
+                    const detectResponse = await fetch('http://127.0.0.1:8000/detect/', {
+                        method: 'POST',
+                        body: formData
+                    });
 
-                if (!detectResponse.ok) {
-                    throw new Error('Detection failed.');
+                    if (!detectResponse.ok) {
+                        throw new Error('Detection failed.');
+                    }
+
+                    detectionBlob = await detectResponse.blob();
+                    const detectImgURL = URL.createObjectURL(detectionBlob);
+                    detectionImage.src = detectImgURL;
+                    detectionImage.alt = 'Detection Image';
                 }
 
-                detectionBlob = await detectResponse.blob();
-                const detectImgURL = URL.createObjectURL(detectionBlob);
-                detectionImage.src = detectImgURL;
-                detectionImage.alt = 'Detection Image';
+                if (segmentationCheckbox.checked) {
+                    // Fetch for Segmentation
+                    const segmentResponse = await fetch('http://127.0.0.1:8000/segment/', {
+                        method: 'POST',
+                        body: formData
+                    });
 
-                // Fetch for Segmentation
-                const segmentResponse = await fetch('http://127.0.0.1:8000/segment/', {
-                    method: 'POST',
-                    body: formData
-                });
+                    if (!segmentResponse.ok) {
+                        throw new Error('Segmentation failed.');
+                    }
 
-                if (!segmentResponse.ok) {
-                    throw new Error('Segmentation failed.');
+                    segmentationBlob = await segmentResponse.blob();
+                    const segmentImgURL = URL.createObjectURL(segmentationBlob);
+                    segmentationImage.src = segmentImgURL;
+                    segmentationImage.alt = 'Segmentation Image';
                 }
-
-                segmentationBlob = await segmentResponse.blob();
-                const segmentImgURL = URL.createObjectURL(segmentationBlob);
-                segmentationImage.src = segmentImgURL;
-                segmentationImage.alt = 'Segmentation Image';
 
             } catch (error) {
                 output.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
