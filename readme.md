@@ -5,7 +5,13 @@ The app offers a detection and a segmentation endpoint.
 
 The Deep learning models used for this projects are [YoloV8](https://docs.ultralytics.com/models/yolov8/#supported-tasks-and-modeshttps://docs.ultralytics.com/models/yolov8/#supported-tasks-and-modes) models from Ultralytics.
 
-### Docker usage
+### Deploy the whole stack (WebApp | Prometheus | Grafana)
+Into the backend folder run:  ```docker-compose up --build```
+Prometheus is available at port 9090.
+Grafana available at port 3000.
+
+### App deployment only
+#### Docker usage
 - build image: ```docker build -t container-name .```
 - run container: ```docker run -p 8000:port container-name```
 
