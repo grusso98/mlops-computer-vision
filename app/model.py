@@ -89,8 +89,8 @@ def draw_masks(image: np.ndarray, masks: list, class_ids: np.ndarray, scores: np
         label = f"{class_names[int(class_id)]}: {score:.2f}"
 
         # Get the size of the label text
-        font_scale = 0.6  # Smaller font for masks too
-        thickness = 1
+        font_scale = 1.2
+        thickness = 2
         text_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, thickness=thickness)[0]
 
         # Calculate text position for the bottom-left corner of the mask bounding box
