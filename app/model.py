@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import torch
 from ultralytics import YOLO
 from prometheus_client import Counter, Summary
 
@@ -15,8 +16,10 @@ def predict(image: np.ndarray, task: str) -> np.ndarray:
         with PREDICTION_LATENCY.labels(task='detection').time():  # Measure prediction latency
             # Load the YOLOv8 detection model
             model = YOLO('models/yolov8n.pt')  # Adjust to your model's path
+            if torch.cuda.is_available():
+                print("Using CUDA")
+                results = model.predict(image, device='cuda')
             results = model.predict(image)
-
             # Get the detection results
             boxes = results[0].boxes.xyxy.cpu().numpy()
             class_ids = results[0].boxes.cls.cpu().numpy()
@@ -35,6 +38,9 @@ def predict(image: np.ndarray, task: str) -> np.ndarray:
         with PREDICTION_LATENCY.labels(task='segmentation').time():  # Measure prediction latency
             # Load the YOLOv8 segmentation model
             model = YOLO('models/yolov8n-seg.pt')  # Adjust to your model's path
+            if torch.cuda.is_available():
+                print("Using CUDA")
+                results = model.predict(image, device='cuda')
             results = model.predict(image)
 
             # Extract segmentation masks, class ids, and scores
